@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainCamera">
+
+    <FrameLayout
+        android:id="@+id/camera_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="75dp"
+            android:id="@+id/lstResolutions"
+            android:dropDownWidth="wrap_content"
+            android:spinnerMode="dropdown"
+            android:layout_gravity="left|top" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start"
+            android:id="@+id/btnStart"
+            android:layout_gravity="center_horizontal|bottom"
+            android:onClick="btnStartClick" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vyfotit"
+            android:id="@+id/btnTakePicture"
+            android:layout_gravity="left|bottom"
+            android:onClick="btnTakePictureClick"
+            android:enabled="false" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rozlišení"
+            android:paddingTop="15dp"
+            android:paddingLeft="5dp"
+            android:id="@+id/textView"
+            android:layout_gravity="left|top" />
+
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/seekBar"
+            android:layout_gravity="center_horizontal|top"
+            android:max="99"
+            android:indeterminate="false"
+            android:progress="99"
+            android:layout_marginTop="85dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Kvalita"
+            android:id="@+id/textView2"
+            android:layout_gravity="left|top"
+            android:paddingTop="55dp"
+            android:paddingLeft="5dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="100"
+            android:id="@+id/txtQuality"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_marginTop="100dp" />
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/txtPocetSnimku"
+            android:layout_gravity="left|center_vertical"
+            android:numeric="integer"
+            android:text="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Počet snímků"
+            android:id="@+id/textView3"
+            android:layout_gravity="left|center_vertical"
+            android:layout_marginTop="-30dp" />
+
+    </FrameLayout>
+
+</RelativeLayout>
