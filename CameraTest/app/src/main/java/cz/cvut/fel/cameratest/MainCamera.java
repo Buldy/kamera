@@ -133,7 +133,11 @@ public class MainCamera extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            oknoKamery.start();
+            kamera.startPreview();
+            snimek++;
+            if (snimek < pocetSnimku){
+                kamera.takePicture(null, null, mPicture);
+            }
         }
     };
 
@@ -163,13 +167,7 @@ public class MainCamera extends AppCompatActivity {
     }
 
     public void btnTakePictureClick(View view) {
-        while (snimek < pocetSnimku) {
-            if (oknoKamery.beziPreview()) {
-                kamera.takePicture(null, null, mPicture);
-                oknoKamery.snimek();
-                snimek++;
-            }
-        }
+        kamera.takePicture(null, null, mPicture);
     }
 
 }
