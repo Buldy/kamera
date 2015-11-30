@@ -4,6 +4,7 @@ import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -18,10 +19,14 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +41,8 @@ public class MainCamera extends AppCompatActivity {
     private int quality = 100;
     private int pocetSnimku = 1;
     private int snimek = 0;
+    SensorManager sMgr;
+    Sensor natoceni;
     float rotX;
     float rotY;
     float rotZ;
@@ -112,6 +119,25 @@ public class MainCamera extends AppCompatActivity {
         btnTakePicture.setEnabled(true);
         EditText txtPocetSnimku = (EditText) findViewById(R.id.txtPocetSnimku);
         pocetSnimku = Integer.parseInt(txtPocetSnimku.getText().toString());
+
+        sMgr = (SensorManager)this.getSystemService(SENSOR_SERVICE);
+        natoceni = sMgr.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+
+        SensorEventListener eventNatoceni = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                rotX = event.values[0];
+                rotY = event.values[1];
+                rotZ = event.values[2];
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
+
+        sMgr.registerListener(eventNatoceni, natoceni, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
@@ -135,6 +161,17 @@ public class MainCamera extends AppCompatActivity {
             }
             kamera.startPreview();
             snimek++;
+            try {
+                File outFile = new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES) + File.separator + "Test" + File.separator + "dataNatoceni.txt");
+                Writer output = new BufferedWriter(new FileWriter(outFile, true));
+                output.append(pictureFile.toString() + "," + Float.toString(rotX) + "," + Float.toString(rotY) + "," + Float.toString(rotZ) + "\n");
+                output.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             if (snimek < pocetSnimku){
                 kamera.takePicture(null, null, mPicture);
             }
