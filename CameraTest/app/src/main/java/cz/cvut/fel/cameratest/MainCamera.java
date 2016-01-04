@@ -1,14 +1,15 @@
 package cz.cvut.fel.cameratest;
 
-import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -18,6 +19,17 @@ import android.widget.FrameLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -25,13 +37,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MainCamera extends AppCompatActivity {
 
@@ -46,11 +55,17 @@ public class MainCamera extends AppCompatActivity {
     float rotX;
     float rotY;
     float rotZ;
+    String mediaDir;
+
+    int camWidth;
+    int camHeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_camera);
+
+        OpenCVLoader.initDebug();
 
         try {
             kamera = Camera.open();//inicializace kamery
@@ -92,11 +107,19 @@ public class MainCamera extends AppCompatActivity {
     }
 
     public void btnStartClick(View view) {
+        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "Test");
+
+        if (!mediaStorageDir.exists()) {
+           if (!mediaStorageDir.mkdirs()) {
+
+            }
+        }
+        mediaDir = mediaStorageDir.getPath();
+
         if (kamera != null) {
             param = kamera.getParameters();
 
-            int camWidth;
-            int camHeight;
             Spinner lstResolution = (Spinner) findViewById(R.id.lstResolutions);
             String[] widthHeight = lstResolution.getSelectedItem().toString().split("x");
             camWidth = Integer.parseInt(widthHeight[0]);
@@ -139,6 +162,37 @@ public class MainCamera extends AppCompatActivity {
 
         sMgr.registerListener(eventNatoceni, natoceni, SensorManager.SENSOR_DELAY_NORMAL);
     }
+
+    private Camera.PictureCallback keypoints = new Camera.PictureCallback() {
+
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+            kamera.startPreview();
+            Mat obrazek;
+            Mat grayMat;
+            MatOfKeyPoint keyPoints = new MatOfKeyPoint();
+            FeatureDetector fDetector = FeatureDetector.create(FeatureDetector.FAST);
+
+            Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+            obrazek = new Mat(bmp.getHeight(), bmp.getWidth(), CvType.CV_8UC3);
+            Bitmap bmp32 = bmp.copy(Bitmap.Config.RGB_565, true);
+            Utils.bitmapToMat(bmp32, obrazek);
+
+            grayMat = new Mat(obrazek.height(), obrazek.width(), CvType.CV_8UC1);
+            Imgproc.cvtColor(obrazek, grayMat, Imgproc.COLOR_RGB2GRAY);
+            fDetector.detect(grayMat, keyPoints);
+            Features2d.drawKeypoints(grayMat, keyPoints, obrazek);
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            Imgcodecs.imwrite(mediaDir + File.separator + "KEYPOINTS_GRAY_" + timeStamp + ".BMP", obrazek);
+
+            fDetector.detect(obrazek, keyPoints);
+            Features2d.drawKeypoints(obrazek, keyPoints, obrazek);
+            timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            Imgcodecs.imwrite(mediaDir + File.separator + "KEYPOINTS_" + timeStamp + ".BMP", obrazek);
+
+            Toast.makeText(getApplicationContext(), "Keypoints saved", Toast.LENGTH_LONG).show();
+        }
+    };
 
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
@@ -185,26 +239,20 @@ public class MainCamera extends AppCompatActivity {
      */
     private File ulozitObrazek() {
 
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "Test");
 
-        if (!mediaStorageDir.exists()) {
-            if (!mediaStorageDir.mkdirs()) {
-                return null;
-            }
-        }
 
         // Create a media file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         File mediaFile;
-        mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                "IMG_" + timeStamp + ".jpg");
+        mediaFile = new File(mediaDir + File.separator +
+            "IMG_" + timeStamp + ".jpg");
 
         return mediaFile;
     }
 
     public void btnTakePictureClick(View view) {
-        kamera.takePicture(null, null, mPicture);
+        //kamera.takePicture(null, null, mPicture);
+        kamera.takePicture(null, null, keypoints);
     }
 
 }
